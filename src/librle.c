@@ -90,7 +90,7 @@ RLE_DATA * RLE_Compress(const uint8_t * data, int32_t data_length)
 	return rle_data;
 }
 
-int8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref)
+uint8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref)
 {
 	uint8_t * uncompressed_data = NULL;
 	if (size_ref) *size_ref = 0;
@@ -165,28 +165,29 @@ RLE_DATA * RLE_Load(const char * filename)
 	if (filename && filename[0] > 0 && rle_data) {
 		FILE * infile = fopen(filename, "rb");
 		if (infile) {
-			uint8_t flag = 0;
 			fread(&rle_data->size, sizeof(int32_t), 1, infile);
 			if (rle_data->size > 0) {
 				rle_data->blocks = (_RLE_BLOCK **) malloc(sizeof(_RLE_BLOCK *) * rle_data->size);
 				if (rle_data->blocks) {
 					rle_data->_capacity = rle_data->size;
 					for (int32_t i = 0; i < rle_data->size && !error; i++) {
-						fread(&flag, sizeof(uint8_t), 1, infile);
-						rle_data->blocks[i]->flag = flag;
-						const uint32_t block_size = (flag & 254) >> 1;
-						switch (flag & 1) {
-							case 0 : {
-								rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t) * block_size);
-								if (rle_data->blocks[i]->data) {
-									fread(rle_data->blocks[i]->data, sizeof(uint8_t), block_size, infile);
-								} else error = true;
-							} break;
-							default : {
-								rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t));
-								fread(rle_data->blocks[i]->data, sizeof(uint8_t), 1, infile);
+						rle_data->blocks[i] = (_RLE_BLOCK *) malloc(sizeof(_RLE_BLOCK));
+						if (rle_data->blocks[i]) {
+							fread(&rle_data->blocks[i]->flag, sizeof(uint8_t), 1, infile);
+							switch (rle_data->blocks[i]->flag & 1) {
+								case 0 : {
+									const uint32_t block_size = (rle_data->blocks[i]->flag & 254) >> 1;
+									rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t) * block_size);
+									if (rle_data->blocks[i]->data) {
+										fread(rle_data->blocks[i]->data, sizeof(uint8_t), block_size, infile);
+									} else error = true;
+								} break;
+								default : {
+									rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t));
+									fread(rle_data->blocks[i]->data, sizeof(uint8_t), 1, infile);
+								}
 							}
-						}
+						} else error = true;
 					}
 				} else {
 					rle_data->size = rle_data->_capacity = 0;

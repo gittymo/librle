@@ -25,7 +25,7 @@
 						If (flag = 1), the array will only hold one character value, the number of these is appears is given by (flag) bits 2 to 8. */
 typedef struct {
 	uint8_t flag;
-	char * data;
+	uint8_t * data;
 } _RLE_BLOCK;
 
 /*	RLE_DATA structure:
@@ -49,7 +49,7 @@ RLE_DATA * RLE_Compress(const uint8_t * data, int32_t data_length);
 /*	RLE_Decompress returns a block of uncompressed data when passed a pointer to an RLE_DATA structure (rle_data) and a reference to an int variable (size_ref).
 		(rle_data) must be a pointer to a valid RLE_DATA data structure.
 		(size_ref) must be a pointer to an 32 integer variable, which is usually defined by the stardard keyword 'int' but can be guaranteed by using a type of 'int32_t'. */
-int8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref);
+uint8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref);
 
 /*	RLE_Save will attempt to save a valid compressed RLE_DATA data structure to disk, given a pointer to the data structure (rle_data) and a pointer to a string giving 
 		the file path (filename). */

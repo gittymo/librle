@@ -22,6 +22,15 @@ int main(int argc, char ** argv)
 		}
 		RLE_Save(rle_data, "test.rle");
 		free(rle_data);
+
+		rle_data = RLE_Load("test.rle");
+		if (rle_data) {
+			int32_t data_size = 0;
+			uint8_t * data = RLE_Decompress(rle_data, &data_size);
+			printf("Decompressed data loaded from file is '%s'.\n", data);
+		} else {
+			printf("Failed to load RLE data from disk.\n");
+		}
 	} else printf("Failed to create RLE data from input source.\n");
 	exit(EXIT_SUCCESS);
 }
