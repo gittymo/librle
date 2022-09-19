@@ -20,6 +20,7 @@ int main(int argc, char ** argv)
 				}
 			}
 		}
+		RLE_Save(rle_data, "test.rle");
 		free(rle_data);
 	} else printf("Failed to create RLE data from input source.\n");
 	exit(EXIT_SUCCESS);

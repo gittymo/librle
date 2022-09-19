@@ -46,6 +46,19 @@ typedef struct {
 		If RLE_Compress fails to compress the data, a NULL pointer will be returned. */
 RLE_DATA * RLE_Compress(const uint8_t * data, int32_t data_length);
 
+/*	RLE_Decompress returns a block of uncompressed data when passed a pointer to an RLE_DATA structure (rle_data) and a reference to an int variable (size_ref).
+		(rle_data) must be a pointer to a valid RLE_DATA data structure.
+		(size_ref) must be a pointer to an 32 integer variable, which is usually defined by the stardard keyword 'int' but can be guaranteed by using a type of 'int32_t'. */
+int8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref);
+
+/*	RLE_Save will attempt to save a valid compressed RLE_DATA data structure to disk, given a pointer to the data structure (rle_data) and a pointer to a string giving 
+		the file path (filename). */
+void RLE_Save(const RLE_DATA * rle_data, const char * filename);
+
+/*	RLE_Load will attempt to load compressed RLE_DATA stored in the file given by path (filename) into memory.  If the load fails, the method 
+		will return a NULL pointer. */
+RLE_DATA * RLE_Load(const char * filename);
+
 /*	Calling RLE_CompressedSize whilst passing a valid RLE_DATA structure will return the length of the compressed data in bytes. */
 int32_t RLE_CompressedSize(const RLE_DATA * rle_data);
 

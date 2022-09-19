@@ -90,6 +90,119 @@ RLE_DATA * RLE_Compress(const uint8_t * data, int32_t data_length)
 	return rle_data;
 }
 
+int8_t * RLE_Decompress(const RLE_DATA * rle_data, int32_t * size_ref)
+{
+	uint8_t * uncompressed_data = NULL;
+	if (size_ref) *size_ref = 0;
+	bool error = false;
+	if (rle_data && rle_data->blocks && rle_data->size > 0) {
+		// Get the uncompressed data size.
+		uint32_t uncompressed_data_size = 0;
+		for (int32_t i = 0; i < rle_data->size; i++) uncompressed_data_size += rle_data->blocks[i] ? (rle_data->blocks[i]->flag & 254) >> 1 : 0;
+		// Try to reserve enough memory for the uncompressed data.
+		uncompressed_data = (uint8_t *) malloc(sizeof(uint8_t) * uncompressed_data_size);
+		if (uncompressed_data) {
+			int32_t o = 0;
+			for (int32_t i = 0; i < rle_data->size && !error; i++) {
+				if (rle_data->blocks[i]) {
+					const int32_t char_count = (rle_data->blocks[i]->flag & 254) >> 1;
+					switch (rle_data->blocks[i]->flag & 1) {
+						case 0 : {
+							memcpy(uncompressed_data + o, rle_data->blocks[i]->data, char_count); 
+							o += char_count;
+						} break;
+						default: {
+							for (int32_t j = 0; j < char_count; j++) uncompressed_data[o++] = rle_data->blocks[i]->data[0];
+						}
+					}
+				} else error = true;
+			}
+			if (!error) *size_ref = uncompressed_data_size;
+		}
+	} else error = true;
+
+	if (error) {
+		if (uncompressed_data) {
+			free(uncompressed_data);
+			uncompressed_data = NULL;
+		}
+	}
+	return uncompressed_data;
+}
+
+void RLE_Save(const RLE_DATA * rle_data, const char * filename)
+{
+	if (rle_data && rle_data->blocks && rle_data->size > 0 && filename && filename[0] > 0) {
+		FILE * outfile = fopen(filename, "wb");
+		if (outfile) {
+			// Write how many blocks are used for the compressed data.
+			fwrite(&rle_data->size, sizeof(int32_t), 1, outfile);
+			// Write each block to file.
+			for (int32_t i = 0; i < rle_data->size; i++) {
+				if (rle_data->blocks[i]) {
+					// Write the block header.
+					fwrite(&rle_data->blocks[i]->flag, sizeof(uint8_t), 1, outfile);
+					switch (rle_data->blocks[i]->flag & 1) {
+						case 0 : {
+							const uint32_t block_size = (rle_data->blocks[i]->flag & 254) >> 1;
+							fwrite(rle_data->blocks[i]->data, sizeof(uint8_t), block_size, outfile);
+						} break;
+						default : {
+							fwrite(rle_data->blocks[i]->data, sizeof(uint8_t), 1, outfile);
+						}
+					}
+				}
+			}
+			fclose(outfile);
+		}
+	}
+}
+
+RLE_DATA * RLE_Load(const char * filename)
+{
+	RLE_DATA * rle_data = (RLE_DATA *) malloc(sizeof(RLE_DATA));
+	bool error = false;
+	if (filename && filename[0] > 0 && rle_data) {
+		FILE * infile = fopen(filename, "rb");
+		if (infile) {
+			uint8_t flag = 0;
+			fread(&rle_data->size, sizeof(int32_t), 1, infile);
+			if (rle_data->size > 0) {
+				rle_data->blocks = (_RLE_BLOCK **) malloc(sizeof(_RLE_BLOCK *) * rle_data->size);
+				if (rle_data->blocks) {
+					rle_data->_capacity = rle_data->size;
+					for (int32_t i = 0; i < rle_data->size && !error; i++) {
+						fread(&flag, sizeof(uint8_t), 1, infile);
+						rle_data->blocks[i]->flag = flag;
+						const uint32_t block_size = (flag & 254) >> 1;
+						switch (flag & 1) {
+							case 0 : {
+								rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t) * block_size);
+								if (rle_data->blocks[i]->data) {
+									fread(rle_data->blocks[i]->data, sizeof(uint8_t), block_size, infile);
+								} else error = true;
+							} break;
+							default : {
+								rle_data->blocks[i]->data = (uint8_t *) malloc(sizeof(uint8_t));
+								fread(rle_data->blocks[i]->data, sizeof(uint8_t), 1, infile);
+							}
+						}
+					}
+				} else {
+					rle_data->size = rle_data->_capacity = 0;
+					error = true;
+				}
+			} else error = true;
+		} else error = true;
+	}
+
+	if (error) {
+		RLE_Free(rle_data);
+		rle_data = NULL;
+	}
+	return rle_data;
+}
+
 int32_t RLE_CompressedSize(const RLE_DATA * rle_data)
 {
 	int32_t compressed_size = 0;
