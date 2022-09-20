@@ -1,4 +1,5 @@
 lib
 obj
 test
+dist
 .vscode
