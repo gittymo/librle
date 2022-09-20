@@ -59,6 +59,10 @@ void RLE_Save(const RLE_DATA * rle_data, const char * filename);
 		will return a NULL pointer. */
 RLE_DATA * RLE_Load(const char * filename);
 
+/*	RLE_Free will attempt to free all resources allocated to the RLE_DATA structure given by the pointer (rle_data).  Once this method has been
+		called on an RLE_DATA structure, its contents are destroyed and will become unusable. */
+void RLE_Free(RLE_DATA * rle_data);
+
 /*	Calling RLE_CompressedSize whilst passing a valid RLE_DATA structure will return the length of the compressed data in bytes. */
 int32_t RLE_CompressedSize(const RLE_DATA * rle_data);
 
