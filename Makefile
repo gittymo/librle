@@ -12,10 +12,13 @@ debug: build_flags := -g -Wall
 
 test: build_flags := -g -Wall
 
-$(OBJ_DIR)/lib$(LIB_NAME).o: $(INC_DIR)/lib$(LIB_NAME).h $(SRC_DIR)/lib$(LIB_NAME).c
+outdirs:
 	mkdir -p $(OBJ_DIR)
 	mkdir -p $(TEST_DIR)
 	mkdir -p $(LIB_DIR)
+
+$(OBJ_DIR)/lib$(LIB_NAME).o: outdirs $(INC_DIR)/lib$(LIB_NAME).h $(SRC_DIR)/lib$(LIB_NAME).c
+	
 	gcc $(build_flags) -c -o $(OBJ_DIR)/lib$(LIB_NAME).o $(SRC_DIR)/lib$(LIB_NAME).c -I$(INC_DIR)
 
 lib: $(OBJ_DIR)/lib$(LIB_NAME).o
@@ -27,7 +30,7 @@ debug: $(OBJ_DIR)/lib$(LIB_NAME).o
 test: debug $(SRC_DIR)/test.c
 	gcc $(build_flags) -o $(TEST_DIR)/testlib$(LIB_NAME) $(SRC_DIR)/test.c -I$(INC_DIR) -L$(LIB_DIR) -l$(LIB_NAME)d
 
-clean:
+clean: outdirs
 	rm -f $(LIB_DIR)/*
 	rm -f $(OBJ_DIR)/*
 	rm -f $(TEST_DIR)/*
